@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Everything Downloader — Download from 1000+ Sites</title>
+    <meta name="description" content="Download videos and audio from YouTube, TikTok, Instagram, Twitter, and 1000+ websites for free.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c5ce7'><path d='M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z'/></svg>">
+    <style>
+        /* ================================================================
+           INLINE SVG ICON SYSTEM
+           ================================================================ */
+        .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            vertical-align: -0.125em;
+            flex-shrink: 0;
+        }
+        .icon svg {
+            width: 100%;
+            height: 100%;
+            fill: currentColor;
+        }
+        .icon-sm { width: .85em; height: .85em; }
+        .icon-lg { width: 1.3em; height: 1.3em; }
+        .icon-xl { width: 1.6em; height: 1.6em; }
+
+        /* ================================================================
+           CSS VARIABLES — THEME SYSTEM
+           ================================================================ */
+        :root {
+            --transition: .25s ease;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 2px 16px rgba(0,0,0,.08);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+            --max-w: 760px;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0b0b0f;
+            --bg2: #12121a;
+            --surface: #1a1a2e;
+            --surface2: #1e2140;
+            --surface-hover: #232650;
+            --border: #2a2d4a;
+            --text: #f0f0f5;
+            --text2: #a0a3bd;
+            --text3: #6b6e8a;
+            --accent: #6c5ce7;
+            --accent-hover: #7c6ff7;
+            --accent-glow: rgba(108,92,231,.2);
+            --success: #00d68f;
+            --success-bg: rgba(0,214,143,.1);
+            --danger: #ff6b6b;
+            --danger-bg: rgba(255,107,107,.1);
+            --warning: #ffc048;
+            --gradient: linear-gradient(135deg, #6c5ce7, #a855f7, #ec4899);
+            --card-shadow: 0 4px 24px rgba(0,0,0,.3);
+            --input-bg: #12121a;
+        }
+
+        [data-theme="light"] {
+            --bg: #f5f5f9;
+            --bg2: #ffffff;
+            --surface: #ffffff;
+            --surface2: #f0f0f5;
+            --surface-hover: #e8e8f0;
+            --border: #e0e0ea;
+            --text: #1a1a2e;
+            --text2: #5a5d7a;
+            --text3: #8a8da8;
+            --accent: #6c5ce7;
+            --accent-hover: #5a4bd6;
+            --accent-glow: rgba(108,92,231,.12);
+            --success: #00b87a;
+            --success-bg: rgba(0,184,122,.08);
+            --danger: #e74c3c;
+            --danger-bg: rgba(231,76,60,.08);
+            --warning: #f59e0b;
+            --gradient: linear-gradient(135deg, #6c5ce7, #a855f7, #ec4899);
+            --card-shadow: 0 2px 16px rgba(0,0,0,.06);
+            --input-bg: #f5f5f9;
+        }
+
+        /* ================================================================
+           RESET & BASE
+           ================================================================ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ================================================================
+           NAV BAR
+           ================================================================ */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--gradient);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .logo-icon svg { width: 16px; height: 16px; fill: #fff; }
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 1.15rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .theme-toggle:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+        .theme-toggle svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* ================================================================
+           HERO
+           ================================================================ */
+        .hero {
+            text-align: center;
+            padding: 48px 20px 20px;
+        }
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .hero p {
+            color: var(--text2);
+            margin-top: 10px;
+            font-size: 1.1rem;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ================================================================
+           CONTAINER
+           ================================================================ */
+        .container {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 0 20px 80px;
+        }
+
+        /* ================================================================
+           URL INPUT AREA
+           ================================================================ */
+        .search-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 6px;
+            box-shadow: var(--card-shadow);
+            margin: 28px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border: 1.5px solid var(--border);
+            transition: border-color var(--transition);
+        }
+        .search-box:focus-within {
+            border-color: var(--accent);
+            box-shadow: var(--card-shadow), 0 0 0 3px var(--accent-glow);
+        }
+        .search-box input {
+            flex: 1;
+            padding: 14px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-box input::placeholder { color: var(--text3); }
+
+        .btn-paste {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--surface2);
+            color: var(--text2);
+            font-size: .85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-paste:hover { background: var(--surface-hover); color: var(--text); }
+        .btn-paste svg { width: 14px; height: 14px; fill: currentColor; }
+
+        .btn-fetch {
+            padding: 12px 28px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-fetch:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn-fetch:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        /* ================================================================
+           HOW IT WORKS STEPS
+           ================================================================ */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0;
+        }
+        .step {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 16px;
+            text-align: center;
+            transition: all var(--transition);
+        }
+        .step:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+        .step-icon {
+            width: 44px;
+            height: 44px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--accent);
+        }
+        .step-icon svg { width: 20px; height: 20px; fill: currentColor; }
+        .step h4 {
+            font-size: .95rem;
+            margin-bottom: 4px;
+        }
+        .step p {
+            font-size: .82rem;
+            color: var(--text3);
+            line-height: 1.4;
+        }
+
+        /* ================================================================
+           ERROR MESSAGE
+           ================================================================ */
+        .error-msg {
+            display: none;
+            color: var(--danger);
+            background: var(--danger-bg);
+            border: 1px solid var(--danger);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin: 16px 0;
+            font-size: .93rem;
+            animation: slideDown .3s;
+            align-items: center;
+            gap: 8px;
+        }
+        .error-msg.show { display: flex; }
+        .error-msg svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+
+        /* ================================================================
+           CARDS
+           ================================================================ */
+        .card {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: var(--card-shadow);
+            animation: slideDown .35s;
+        }
+        .card.show { display: block; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Preview Card */
+        .preview-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .preview-thumb {
+            width: 200px;
+            min-width: 200px;
+            border-radius: 10px;
+            object-fit: cover;
+            aspect-ratio: 16/9;
+            background: var(--bg);
+        }
+        .preview-info { flex: 1; }
+        .preview-info h3 {
+            font-size: 1.05rem;
+            line-height: 1.3;
+            margin-bottom: 8px;
+        }
+        .preview-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+        .preview-meta span {
+            font-size: .85rem;
+            color: var(--text2);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .preview-meta svg { width: 14px; height: 14px; fill: currentColor; opacity: .7; }
+        .extractor-badge {
+            display: inline-block;
+            background: var(--accent-glow);
+            color: var(--accent);
+            font-size: .75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 99px;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        /* Options row */
+        .options-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .options-row select {
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: .9rem;
+            cursor: pointer;
+            transition: border-color var(--transition);
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6e8a' d='M6 8.4L1.2 3.6h9.6z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .options-row select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-download {
+            padding: 11px 28px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: var(--gradient);
+            color: #fff;
+            font-size: .95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-download:hover { transform: translateY(-1px); box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-download:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .btn-download svg { width: 16px; height: 16px; fill: currentColor; }
+
+        /* ================================================================
+           PROGRESS
+           ================================================================ */
+        .progress-card {
+            display: none;
+            margin: 20px 0;
+        }
+        .progress-card.show { display: block; }
+
+        .progress-inner {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: var(--card-shadow);
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .progress-header strong {
+            font-size: .95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-header .pct {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .progress-bar-track {
+            width: 100%;
+            height: 8px;
+            background: var(--surface2);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--gradient);
+            border-radius: 99px;
+            transition: width .4s ease;
+        }
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: .82rem;
+            color: var(--text3);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid var(--text3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ================================================================
+           RESULT CARD
+           ================================================================ */
+        .result-card { text-align: center; }
+        .result-card .success-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--success-bg);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            border: 2px solid var(--success);
+        }
+        .result-card .success-icon svg { width: 28px; height: 28px; fill: currentColor; }
+        .result-card h3 {
+            color: var(--success);
+            font-size: 1.15rem;
+            margin-bottom: 6px;
+        }
+        .result-card .result-title {
+            color: var(--text2);
+            font-size: .9rem;
+            margin-bottom: 16px;
+        }
+        .btn-save {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 32px;
+            border-radius: var(--radius-sm);
+            background: var(--success);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all var(--transition);
+        }
+        .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,214,143,.3); }
+        .btn-save svg { width: 18px; height: 18px; fill: currentColor; }
+
+        .file-list { text-align: left; margin-top: 16px; }
+        .file-list a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            margin: 6px 0;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            text-decoration: none;
+            font-size: .88rem;
+            transition: background var(--transition);
+        }
+        .file-list a:hover { background: var(--surface-hover); }
+        .file-list a svg { width: 16px; height: 16px; fill: var(--accent); flex-shrink: 0; }
+
+        .btn-new {
+            margin-top: 16px;
+            padding: 10px 24px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            background: transparent;
+            color: var(--text2);
+            font-size: .9rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ================================================================
+           SUPPORTED PLATFORMS
+           ================================================================ */
+        .platforms-section { margin-top: 48px; }
+        .section-title {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .section-subtitle {
+            text-align: center;
+            color: var(--text3);
+            font-size: .9rem;
+            margin-bottom: 20px;
+        }
+        .platforms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .platform-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px 12px;
+            text-align: center;
+            font-size: .88rem;
+            font-weight: 500;
+            transition: all var(--transition);
+            cursor: default;
+        }
+        .platform-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--card-shadow);
+        }
+        .platform-card .p-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+        .platform-card .p-icon svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* ================================================================
+           FAQ
+           ================================================================ */
+        .faq-section { margin-top: 48px; }
+        .faq-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: all var(--transition);
+        }
+        .faq-q {
+            padding: 16px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: .93rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .faq-q:hover { background: var(--surface2); }
+        .faq-q .arrow {
+            transition: transform .2s;
+            color: var(--text3);
+            display: flex;
+        }
+        .faq-q .arrow svg { width: 16px; height: 16px; fill: currentColor; }
+        .faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease, padding .3s;
+            padding: 0 20px;
+            color: var(--text2);
+            font-size: .88rem;
+            line-height: 1.6;
+        }
+        .faq-item.open .faq-a {
+            max-height: 200px;
+            padding: 0 20px 16px;
+        }
+
+        /* ================================================================
+           HISTORY
+           ================================================================ */
+        .history-section {
+            margin-top: 40px;
+            display: none;
+        }
+        .history-section.show { display: block; }
+        .history-list { list-style: none; }
+        .history-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            font-size: .88rem;
+            transition: background var(--transition);
+        }
+        .history-list li:hover { background: var(--surface2); }
+        .history-list .h-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 12px;
+        }
+        .history-list .h-time {
+            color: var(--text3);
+            font-size: .8rem;
+            white-space: nowrap;
+        }
+        .btn-clear-history {
+            margin-top: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text3);
+            font-size: .82rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-clear-history:hover { border-color: var(--danger); color: var(--danger); }
+
+        /* ================================================================
+           FOOTER
+           ================================================================ */
+        footer {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--text3);
+            font-size: .82rem;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        /* ================================================================
+           TOOLTIP
+           ================================================================ */
+        .tooltip { position: relative; }
+        .tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            color: var(--text);
+            font-size: .78rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s;
+        }
+        .tooltip:hover::after { opacity: 1; }
+
+        /* ================================================================
+           RESPONSIVE
+           ================================================================ */
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.8rem; }
+            .hero p { font-size: .95rem; }
+            .steps { grid-template-columns: 1fr; }
+            .preview-layout { flex-direction: column; }
+            .preview-thumb { width: 100%; min-width: 0; }
+            .options-row { flex-direction: column; }
+            .btn-download { margin-left: 0; width: 100%; justify-content: center; }
+            .platforms-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-box { flex-wrap: wrap; }
+            .search-box input { min-width: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ====================================================================
+     SVG SPRITE (hidden) — all icons defined once, referenced via <use>
+     ==================================================================== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <!-- Download arrow -->
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/></symbol>
+    <!-- Sun -->
+    <symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zm0-4a1 1 0 011 1v1a1 1 0 01-2 0V4a1 1 0 011-1zm0 17a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm9-9a1 1 0 01-1 1h-1a1 1 0 010-2h1a1 1 0 011 1zM5 12a1 1 0 01-1 1H3a1 1 0 010-2h1a1 1 0 011 1zm14.07-6.07a1 1 0 010 1.41l-.71.71a1 1 0 01-1.41-1.41l.7-.71a1 1 0 011.42 0zM7.05 17.66a1 1 0 010 1.41l-.7.71a1 1 0 01-1.42-1.42l.71-.7a1 1 0 011.41 0zm11.9 0a1 1 0 01-1.41 0l-.71-.7a1 1 0 011.41-1.42l.71.71a1 1 0 010 1.41zM7.05 6.34a1 1 0 01-1.41 0l-.71-.71a1 1 0 011.42-1.42l.7.71a1 1 0 010 1.42z"/></symbol>
+    <!-- Moon -->
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 01-4.4 2.26 5.4 5.4 0 01-3.14-9.8A9 9 0 0012 3z"/></symbol>
+    <!-- Clipboard / paste -->
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></symbol>
+    <!-- Search / fetch -->
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></symbol>
+    <!-- Link -->
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4a5 5 0 000-10z"/></symbol>
+    <!-- Settings / format -->
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 000-1.88l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.04 7.04 0 00-1.62-.94l-.36-2.54a.48.48 0 00-.48-.41h-3.84a.48.48 0 00-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87a.48.48 0 00.12.61l2.03 1.58a7.07 7.07 0 000 1.88l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></symbol>
+    <!-- Checkmark -->
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></symbol>
+    <!-- Warning / alert -->
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></symbol>
+    <!-- Chevron down -->
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></symbol>
+    <!-- Play / video -->
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7L8 5z"/></symbol>
+    <!-- Music / audio -->
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></symbol>
+    <!-- Star / best -->
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+    <!-- User -->
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    <!-- Clock / duration -->
+    <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10 10-4.49 10-10S17.51 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></symbol>
+    <!-- Eye / views -->
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+    <!-- Folder -->
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></symbol>
+    <!-- Globe / web -->
+    <symbol id="i-globe" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></symbol>
+    <!-- Camera / photo -->
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></symbol>
+    <!-- Message / chat -->
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></symbol>
+    <!-- TV / screen -->
+    <symbol id="i-tv" viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 14H3V5h18v12z"/></symbol>
+    <!-- Headphones -->
+    <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M12 3a9 9 0 00-9 9v7c0 1.1.9 2 2 2h2v-8H5v-1a7 7 0 0114 0v1h-2v8h2c1.1 0 2-.9 2-2v-7a9 9 0 00-9-9z"/></symbol>
+    <!-- Radio / broadcast -->
+    <symbol id="i-radio" viewBox="0 0 24 24"><path d="M3.24 6.15C2.51 6.43 2 7.17 2 8v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2H8.3l8.26-3.34-.37-.92-13 5.41zM7 20c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm13-8h-2v-2h-2v2H4V10h16v2z"/></symbol>
+    <!-- Hash / thread -->
+    <symbol id="i-hash" viewBox="0 0 24 24"><path d="M20 10V8h-4V4h-2v4h-4V4H8v4H4v2h4v4H4v2h4v4h2v-4h4v4h2v-4h4v-2h-4v-4h4zm-6 4h-4v-4h4v4z"/></symbol>
+    <!-- Film -->
+    <symbol id="i-film" viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></symbol>
+    <!-- Bookmark -->
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></symbol>
+    <!-- Plus circle -->
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></symbol>
+    <!-- Refresh -->
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></symbol>
+    <!-- Delete / trash -->
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></symbol>
+</svg>
+
+<!-- ====== NAV ====== -->
+<nav>
+    <div class="logo">
+        <div class="logo-icon">
+            <svg><use href="#i-download"/></svg>
+        </div>
+        <span class="logo-text">Everything</span>
+    </div>
+    <div class="nav-right">
+        <button class="theme-toggle tooltip" data-tip="Toggle theme" onclick="toggleTheme()" id="themeBtn" aria-label="Toggle theme">
+            <svg id="themeSvgMoon"><use href="#i-moon"/></svg>
+            <svg id="themeSvgSun" style="display:none;"><use href="#i-sun"/></svg>
+        </button>
+    </div>
+</nav>
+
+<!-- ====== HERO ====== -->
+<section class="hero">
+    <h1>Download Everything</h1>
+    <p>Paste any link from YouTube, TikTok, Instagram, Twitter/X, and 1000+ other sites — grab video or audio instantly.</p>
+</section>
+
+<!-- ====== MAIN ====== -->
+<div class="container">
+
+    <!-- URL Input -->
+    <div class="search-box" id="searchBox">
+        <input type="text" id="urlInput" placeholder="Paste your URL here..." autocomplete="off" spellcheck="false">
+        <button class="btn-paste tooltip" data-tip="Paste from clipboard" onclick="pasteFromClipboard()">
+            <svg><use href="#i-clipboard"/></svg> Paste
+        </button>
+        <button class="btn-fetch" id="fetchBtn" onclick="fetchInfo()">
+            <svg style="width:16px;height:16px;fill:currentColor;"><use href="#i-search"/></svg> Fetch Info
+        </button>
+    </div>
+
+    <!-- How-to Steps -->
+    <div class="steps" id="stepsSection">
+        <div class="step">
+            <div class="step-icon"><svg><use href="#i-link"/></svg></div>
+            <h4>Paste URL</h4>
+            <p>Copy a link from any supported platform and paste it above</p>
+        </div>
+        <div class="step">
+            <div class="step-icon"><svg><use href="#i-settings"/></svg></div>
+            <h4>Choose Format</h4>
+            <p>Pick video (MP4), audio (MP3), or best available quality</p>
+        </div>
+        <div class="step">
+            <div class="step-icon"><svg><use href="#i-download"/></svg></div>
+            <h4>Download</h4>
+            <p>Hit download and save the file directly to your device</p>
+        </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg">
+        <svg><use href="#i-warning"/></svg>
+        <span id="errorText"></span>
+    </div>
+
+    <!-- Single Video Preview -->
+    <div class="card" id="previewCard">
+        <div class="preview-layout">
+            <img class="preview-thumb" id="previewThumb" src="" alt="thumbnail">
+            <div class="preview-info">
+                <h3 id="previewTitle">—</h3>
+                <div class="preview-meta">
+                    <span id="previewUploader"></span>
+                    <span id="previewDuration"></span>
+                    <span id="previewViews"></span>
+                </div>
+                <span class="extractor-badge" id="previewExtractor"></span>
+            </div>
+        </div>
+        <div class="options-row">
+            <select id="formatSelect" onchange="onFormatChange()">
+                <option value="video">Video (MP4)</option>
+                <option value="audio">Audio (MP3)</option>
+                <option value="best">Best Available</option>
+            </select>
+            <select id="qualitySelect">
+                <option value="best">Best Quality</option>
+                <option value="1080">1080p HD</option>
+                <option value="720">720p</option>
+                <option value="480">480p</option>
+                <option value="360">360p</option>
+            </select>
+            <button class="btn-download" onclick="startDownload()">
+                <svg><use href="#i-download"/></svg> Download
+            </button>
+        </div>
+    </div>
+
+    <!-- Playlist Preview -->
+    <div class="card" id="playlistCard">
+        <h3 id="playlistTitle" style="margin-bottom:4px;">Playlist</h3>
+        <div class="preview-meta" style="margin-bottom:4px;">
+            <span id="playlistCount"></span>
+            <span class="extractor-badge" id="playlistExtractor"></span>
+        </div>
+        <div id="playlistItems" style="max-height:200px;overflow-y:auto;margin:12px 0;font-size:.88rem;color:var(--text2);"></div>
+        <div class="options-row">
+            <select id="plFormatSelect">
+                <option value="video">Video (MP4)</option>
+                <option value="audio">Audio (MP3)</option>
+                <option value="best">Best Available</option>
+            </select>
+            <select id="plQualitySelect">
+                <option value="best">Best Quality</option>
+                <option value="1080">1080p HD</option>
+                <option value="720">720p</option>
+                <option value="480">480p</option>
+                <option value="360">360p</option>
+            </select>
+            <button class="btn-download" onclick="startDownload()">
+                <svg><use href="#i-download"/></svg> Download All
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-card" id="progressCard">
+        <div class="progress-inner">
+            <div class="progress-header">
+                <strong id="progressStatus"><span class="spinner"></span> Starting download...</strong>
+                <span class="pct" id="progressPct">0%</span>
+            </div>
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+            <div class="progress-details">
+                <span id="progressSpeed"></span>
+                <span id="progressEta"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result -->
+    <div class="card result-card" id="resultCard"></div>
+
+    <!-- Supported Platforms -->
+    <section class="platforms-section">
+        <h2 class="section-title">Supported Platforms</h2>
+        <p class="section-subtitle">Download from 1,000+ websites — here are the most popular ones</p>
+        <div class="platforms-grid">
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-play"/></svg></div>YouTube</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-music"/></svg></div>TikTok</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-camera"/></svg></div>Instagram</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-message"/></svg></div>Twitter / X</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-globe"/></svg></div>Facebook</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-bookmark"/></svg></div>Reddit</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-film"/></svg></div>Vimeo</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-headphones"/></svg></div>SoundCloud</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-radio"/></svg></div>Twitch</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-tv"/></svg></div>Dailymotion</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-music"/></svg></div>Bandcamp</div>
+            <div class="platform-card"><div class="p-icon"><svg><use href="#i-hash"/></svg></div>Threads</div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-subtitle">Quick answers to common questions</p>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span>What sites are supported?</span>
+                <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="faq-a">Everything Downloader uses yt-dlp which supports over 1,000 websites. If a site has video or audio content, there's a strong chance it's supported. Try pasting the link!</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span>Can I download entire playlists?</span>
+                <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="faq-a">Yes! Simply paste a playlist URL and it will detect all items automatically. You'll be able to download the entire playlist in your chosen format and quality.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span>What's the difference between Video, Audio, and Best?</span>
+                <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="faq-a"><strong>Video (MP4)</strong> gives you a standard video file. <strong>Audio (MP3)</strong> extracts just the audio track. <strong>Best Available</strong> downloads the highest quality format the site offers, which might be in a different container format.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span>Why did my download fail?</span>
+                <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="faq-a">Common reasons: the URL might be private/age-restricted, the site may have changed its format, or ffmpeg might not be installed (needed for merging video+audio and converting to MP3). Make sure ffmpeg is installed on the server.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span>Is this free to use?</span>
+                <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
+            </div>
+            <div class="faq-a">Yes, 100% free and open source. Powered by yt-dlp, an open-source project. No ads, no signups, no limits.</div>
+        </div>
+    </section>
+
+    <!-- History -->
+    <section class="history-section" id="historySection">
+        <h2 class="section-title" style="font-size:1.1rem;">Recent Downloads</h2>
+        <ul class="history-list" id="historyList"></ul>
+        <button class="btn-clear-history" onclick="clearHistory()">Clear History</button>
+    </section>
+
+</div>
+
+<!-- ====== FOOTER ====== -->
+<footer>
+    <p>Everything Downloader &mdash; Powered by <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener">yt-dlp</a> &amp; Flask</p>
+    <p style="margin-top:4px;">For personal use only. Respect copyright laws.</p>
+</footer>
+
+<!-- ====== JAVASCRIPT ====== -->
+<script>
+(function() {
+    "use strict";
+
+    /* ---- SVG icon helper (returns inline SVG markup from sprite) ---- */
+    const svgIcon = (id, cls) =>
+        `<svg class="${cls||""}" style="width:1em;height:1em;fill:currentColor;vertical-align:-0.125em;"><use href="#${id}"/></svg>`;
+
+    let currentTaskId = null;
+    let pollInterval = null;
+    let isPlaylist = false;
+
+    const $ = id => document.getElementById(id);
+
+    /* ---- Theme ---- */
+    function initTheme() {
+        const saved = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+        updateThemeButton(saved);
+    }
+
+    function updateThemeButton(theme) {
+        $("themeSvgMoon").style.display = theme === "dark" ? "" : "none";
+        $("themeSvgSun").style.display = theme === "dark" ? "none" : "";
+    }
+
+    window.toggleTheme = function() {
+        const current = document.documentElement.getAttribute("data-theme");
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+        updateThemeButton(next);
+    };
+
+    /* ---- Clipboard ---- */
+    window.pasteFromClipboard = async function() {
+        try {
+            const text = await navigator.clipboard.readText();
+            $("urlInput").value = text;
+            $("urlInput").focus();
+        } catch {
+            showError("Clipboard access denied. Please paste manually (Ctrl+V / Cmd+V).");
+        }
+    };
+
+    /* ---- Error ---- */
+    function showError(msg) {
+        $("errorText").textContent = msg;
+        $("errorMsg").classList.add("show");
+        setTimeout(() => $("errorMsg").classList.remove("show"), 7000);
+    }
+
+    /* ---- Helpers ---- */
+    function hideAllCards() {
+        $("previewCard").classList.remove("show");
+        $("playlistCard").classList.remove("show");
+        $("progressCard").classList.remove("show");
+        $("resultCard").classList.remove("show");
+        $("errorMsg").classList.remove("show");
+    }
+
+    function formatDuration(sec) {
+        if (!sec) return "";
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = Math.floor(sec % 60);
+        if (h) return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+        return `${m}:${String(s).padStart(2,"0")}`;
+    }
+
+    function formatViews(n) {
+        if (!n) return "";
+        if (n >= 1e9) return (n/1e9).toFixed(1) + "B views";
+        if (n >= 1e6) return (n/1e6).toFixed(1) + "M views";
+        if (n >= 1e3) return (n/1e3).toFixed(1) + "K views";
+        return n + " views";
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    /* ---- Format change: hide quality for audio ---- */
+    window.onFormatChange = function() {
+        const fmt = $("formatSelect").value;
+        $("qualitySelect").style.display = fmt === "audio" ? "none" : "";
+    };
+
+    /* ---- Fetch Info ---- */
+    window.fetchInfo = async function() {
+        const url = $("urlInput").value.trim();
+        if (!url) { showError("Please paste a URL first."); return; }
+
+        hideAllCards();
+        $("stepsSection").style.display = "none";
+        $("fetchBtn").disabled = true;
+        $("fetchBtn").innerHTML = '<span class="spinner"></span> Fetching...';
+
+        try {
+            const res = await fetch("/api/info", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({url})
+            });
+            const data = await res.json();
+            if (data.error) { showError(data.error); return; }
+
+            if (data.is_playlist) {
+                isPlaylist = true;
+                $("playlistTitle").textContent = data.title || "Playlist";
+                $("playlistCount").innerHTML = `${svgIcon("i-folder")} ${data.count} items`;
+                $("playlistExtractor").textContent = data.extractor || "";
+                $("playlistExtractor").style.display = data.extractor ? "" : "none";
+
+                const container = $("playlistItems");
+                container.innerHTML = "";
+                (data.items || []).forEach((item, i) => {
+                    const div = document.createElement("div");
+                    div.style.cssText = "padding:6px 0;border-bottom:1px solid var(--border);";
+                    div.textContent = `${i+1}. ${item.title || "Untitled"}` + (item.duration ? ` (${formatDuration(item.duration)})` : "");
+                    container.appendChild(div);
+                });
+
+                $("playlistCard").classList.add("show");
+            } else {
+                isPlaylist = false;
+                $("previewTitle").textContent = data.title || "Unknown";
+                $("previewUploader").innerHTML = data.uploader ? `${svgIcon("i-user")} ${escapeHtml(data.uploader)}` : "";
+                $("previewDuration").innerHTML = data.duration ? `${svgIcon("i-clock")} ${formatDuration(data.duration)}` : "";
+                $("previewViews").innerHTML = data.view_count ? `${svgIcon("i-eye")} ${formatViews(data.view_count)}` : "";
+                $("previewThumb").src = data.thumbnail || "";
+                $("previewThumb").style.display = data.thumbnail ? "" : "none";
+                $("previewExtractor").textContent = data.extractor || "";
+                $("previewExtractor").style.display = data.extractor ? "" : "none";
+
+                if (data.formats && data.formats.length) {
+                    const sel = $("qualitySelect");
+                    sel.innerHTML = '<option value="best">Best Quality</option>';
+                    const seen = new Set();
+                    data.formats.forEach(f => {
+                        if (!seen.has(f.height)) {
+                            seen.add(f.height);
+                            sel.innerHTML += `<option value="${f.height}">${f.height}p</option>`;
+                        }
+                    });
+                }
+
+                $("previewCard").classList.add("show");
+            }
+        } catch (e) {
+            showError("Network error: " + e.message);
+        } finally {
+            $("fetchBtn").disabled = false;
+            $("fetchBtn").innerHTML = `${svgIcon("i-search")} Fetch Info`;
+        }
+    };
+
+    /* ---- Download ---- */
+    window.startDownload = async function() {
+        const url = $("urlInput").value.trim();
+        if (!url) { showError("Please paste a URL first."); return; }
+
+        const fmt = isPlaylist ? $("plFormatSelect").value : $("formatSelect").value;
+        const quality = isPlaylist ? $("plQualitySelect").value : $("qualitySelect").value;
+
+        $("previewCard").classList.remove("show");
+        $("playlistCard").classList.remove("show");
+        $("resultCard").classList.remove("show");
+        $("progressCard").classList.add("show");
+        $("progressBar").style.width = "0%";
+        $("progressPct").textContent = "0%";
+        $("progressStatus").innerHTML = '<span class="spinner"></span> Starting download...';
+        $("progressSpeed").textContent = "";
+        $("progressEta").textContent = "";
+
+        try {
+            const res = await fetch("/api/download", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({url, format: fmt, quality})
+            });
+            const data = await res.json();
+            if (data.error) { showError(data.error); $("progressCard").classList.remove("show"); return; }
+
+            currentTaskId = data.task_id;
+            pollProgress();
+        } catch (e) {
+            showError("Failed to start: " + e.message);
+            $("progressCard").classList.remove("show");
+        }
+    };
+
+    function pollProgress() {
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/task/${currentTaskId}`);
+                const data = await res.json();
+
+                if (data.status === "downloading") {
+                    $("progressBar").style.width = data.progress + "%";
+                    $("progressPct").textContent = data.progress + "%";
+                    $("progressSpeed").textContent = data.speed || "";
+                    $("progressEta").textContent = data.eta ? `ETA: ${data.eta}` : "";
+                    $("progressStatus").innerHTML = '<span class="spinner"></span> Downloading...';
+                } else if (data.status === "processing") {
+                    $("progressBar").style.width = "100%";
+                    $("progressPct").textContent = "100%";
+                    $("progressStatus").innerHTML = '<span class="spinner"></span> Processing (merging / converting)...';
+                } else if (data.status === "done") {
+                    clearInterval(pollInterval);
+                    $("progressCard").classList.remove("show");
+                    showResult(data);
+                } else if (data.status === "error") {
+                    clearInterval(pollInterval);
+                    $("progressCard").classList.remove("show");
+                    showError(data.error || "Download failed. Please try again.");
+                }
+            } catch {}
+        }, 700);
+    }
+
+    function showResult(data) {
+        const card = $("resultCard");
+        const checkSvg = `<svg><use href="#i-check"/></svg>`;
+        const dlSvg = `<svg style="width:16px;height:16px;fill:currentColor;"><use href="#i-download"/></svg>`;
+
+        if (data.filenames) {
+            let html = `
+                <div class="success-icon">${checkSvg}</div>
+                <h3>Download Complete!</h3>
+                <p class="result-title">${escapeHtml(data.title)}</p>
+                <div class="file-list">`;
+            data.filenames.forEach(f => {
+                html += `<a href="/api/file/${encodeURIComponent(f)}" download>${dlSvg} ${escapeHtml(f)}</a>`;
+            });
+            html += `</div><button class="btn-new" onclick="resetUI()">Download Another</button>`;
+            card.innerHTML = html;
+            addHistory(data.title, null);
+        } else {
+            card.innerHTML = `
+                <div class="success-icon">${checkSvg}</div>
+                <h3>Download Complete!</h3>
+                <p class="result-title">${escapeHtml(data.title || "")}</p>
+                <a class="btn-save" href="/api/file/${encodeURIComponent(data.filename)}" download>
+                    ${dlSvg} Save File
+                </a>
+                <br>
+                <button class="btn-new" onclick="resetUI()">Download Another</button>`;
+            addHistory(data.title || data.filename, `/api/file/${encodeURIComponent(data.filename)}`);
+        }
+
+        card.classList.add("show");
+    }
+
+    window.resetUI = function() {
+        $("urlInput").value = "";
+        hideAllCards();
+        $("stepsSection").style.display = "";
+        $("urlInput").focus();
+    };
+
+    /* ---- FAQ ---- */
+    window.toggleFaq = function(el) {
+        el.parentElement.classList.toggle("open");
+    };
+
+    /* ---- History (localStorage) ---- */
+    function loadHistory() {
+        const items = JSON.parse(localStorage.getItem("dl_history") || "[]");
+        if (!items.length) return;
+        $("historySection").classList.add("show");
+        const list = $("historyList");
+        list.innerHTML = "";
+        items.slice(0, 20).forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `<span class="h-title">${escapeHtml(item.title)}</span><span class="h-time">${escapeHtml(item.time)}</span>`;
+            list.appendChild(li);
+        });
+    }
+
+    function addHistory(title, link) {
+        const items = JSON.parse(localStorage.getItem("dl_history") || "[]");
+        items.unshift({
+            title: title || "Unknown",
+            time: new Date().toLocaleString(),
+            link: link
+        });
+        if (items.length > 50) items.length = 50;
+        localStorage.setItem("dl_history", JSON.stringify(items));
+        loadHistory();
+    }
+
+    window.clearHistory = function() {
+        localStorage.removeItem("dl_history");
+        $("historySection").classList.remove("show");
+    };
+
+    /* ---- Enter key ---- */
+    $("urlInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") window.fetchInfo();
+    });
+
+    /* ---- Init ---- */
+    initTheme();
+    loadHistory();
+
+})();
+</script>
+
+</body>
+</html>
