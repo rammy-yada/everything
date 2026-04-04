@@ -19,6 +19,7 @@ DOWNLOAD_DIR = Path(__file__).parent / "downloads"
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
 COOKIES_FILE = Path(__file__).parent / "cookies.txt"
+BROWSER_FILE = Path(__file__).parent / ".cookie_browser"
 
 # Auto-cleanup files older than 1 hour
 MAX_FILE_AGE = 3600
@@ -45,7 +46,11 @@ def _cleanup_old_files():
 
 
 def _cookie_opts() -> dict:
-    """Return yt-dlp cookie options if a cookies.txt file exists."""
+    """Return yt-dlp cookie options. Prefers browser extraction, falls back to file."""
+    if BROWSER_FILE.is_file():
+        browser = BROWSER_FILE.read_text().strip()
+        if browser:
+            return {"cookiesfrombrowser": (browser,)}
     if COOKIES_FILE.is_file():
         return {"cookiefile": str(COOKIES_FILE)}
     return {}
@@ -259,7 +264,34 @@ def delete_cookies():
 @app.route("/api/cookies", methods=["GET"])
 def cookies_status():
     """Check if cookies are configured."""
-    return jsonify(has_cookies=COOKIES_FILE.is_file())
+    browser = ""
+    if BROWSER_FILE.is_file():
+        browser = BROWSER_FILE.read_text().strip()
+    return jsonify(
+        has_cookies=COOKIES_FILE.is_file() or bool(browser),
+        method="browser" if browser else ("file" if COOKIES_FILE.is_file() else "none"),
+        browser=browser,
+    )
+
+
+@app.route("/api/cookies/browser", methods=["POST"])
+def set_browser_cookies():
+    """Set browser cookie extraction (local use only)."""
+    data = request.get_json(force=True)
+    browser = data.get("browser", "").strip().lower()
+    valid = ["chrome", "firefox", "edge", "safari", "opera", "brave", "chromium", "vivaldi"]
+    if browser not in valid:
+        return jsonify(error=f"Invalid browser. Choose from: {', '.join(valid)}"), 400
+    BROWSER_FILE.write_text(browser)
+    return jsonify(ok=True, browser=browser)
+
+
+@app.route("/api/cookies/browser", methods=["DELETE"])
+def remove_browser_cookies():
+    """Remove browser cookie config."""
+    if BROWSER_FILE.is_file():
+        BROWSER_FILE.unlink()
+    return jsonify(ok=True)
 
 
 # ---------------------------------------------------------------------------
