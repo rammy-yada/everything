@@ -18,6 +18,8 @@ app = Flask(__name__)
 DOWNLOAD_DIR = Path(__file__).parent / "downloads"
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
+COOKIES_FILE = Path(__file__).parent / "cookies.txt"
+
 # Auto-cleanup files older than 1 hour
 MAX_FILE_AGE = 3600
 
@@ -40,6 +42,13 @@ def _cleanup_old_files():
                 f.unlink()
         except OSError:
             pass
+
+
+def _cookie_opts() -> dict:
+    """Return yt-dlp cookie options if a cookies.txt file exists."""
+    if COOKIES_FILE.is_file():
+        return {"cookiefile": str(COOKIES_FILE)}
+    return {}
 
 
 def _progress_hook(task_id):
@@ -70,6 +79,7 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
             "restrictfilenames": True,
             "quiet": True,
             "no_warnings": True,
+            **_cookie_opts(),
         }
 
         if fmt == "audio":
@@ -149,7 +159,7 @@ def get_info():
         return jsonify(error="URL is required"), 400
 
     try:
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, **_cookie_opts()}) as ydl:
             info = ydl.extract_info(url, download=False)
             if info is None:
                 return jsonify(error="Could not extract info"), 400
@@ -223,6 +233,33 @@ def task_status(task_id):
 def serve_file(filename):
     safe_name = Path(filename).name
     return send_from_directory(DOWNLOAD_DIR, safe_name, as_attachment=True)
+
+
+@app.route("/api/cookies", methods=["POST"])
+def upload_cookies():
+    """Upload a cookies.txt file (Netscape format)."""
+    f = request.files.get("file")
+    if not f:
+        return jsonify(error="No file uploaded"), 400
+    content = f.read().decode("utf-8", errors="replace")
+    if not content.strip():
+        return jsonify(error="File is empty"), 400
+    COOKIES_FILE.write_text(content)
+    return jsonify(ok=True, message="Cookies saved successfully")
+
+
+@app.route("/api/cookies", methods=["DELETE"])
+def delete_cookies():
+    """Remove the cookies.txt file."""
+    if COOKIES_FILE.is_file():
+        COOKIES_FILE.unlink()
+    return jsonify(ok=True, message="Cookies removed")
+
+
+@app.route("/api/cookies", methods=["GET"])
+def cookies_status():
+    """Check if cookies are configured."""
+    return jsonify(has_cookies=COOKIES_FILE.is_file())
 
 
 # ---------------------------------------------------------------------------
