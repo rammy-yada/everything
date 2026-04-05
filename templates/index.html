@@ -698,6 +698,68 @@
         }
 
         /* ================================================================
+           HOW-TO GUIDE (all platforms)
+           ================================================================ */
+        .howto-section { margin-top: 48px; }
+        .howto-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        @media (max-width: 640px) {
+            .howto-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ================================================================
+           SECURITY & PRIVACY
+           ================================================================ */
+        .security-section { margin-top: 48px; }
+        .security-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-top: 20px;
+        }
+        .sec-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 18px;
+            text-align: center;
+            transition: all var(--transition);
+        }
+        .sec-card:hover {
+            border-color: var(--accent);
+            box-shadow: var(--card-shadow);
+        }
+        .sec-card .sec-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+        .sec-card .sec-icon svg { width: 20px; height: 20px; fill: currentColor; }
+        .sec-card h3 {
+            font-size: .92rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .sec-card p {
+            color: var(--text2);
+            font-size: .84rem;
+            line-height: 1.55;
+        }
+        @media (max-width: 640px) {
+            .security-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ================================================================
            FAQ
            ================================================================ */
         .faq-section { margin-top: 48px; }
@@ -1246,6 +1308,94 @@
         </div>
         <div class="guide-note">
             <strong>Getting "Sign in to confirm you're not a bot"?</strong> YouTube blocks requests from server/datacenter IPs. Click the <svg style="width:14px;height:14px;vertical-align:-2px;fill:currentColor"><use href="#i-cookie"/></svg> cookie icon in the top bar and follow the setup guide to provide your real YouTube cookies. For Render deployments, use the <code>YT_COOKIES</code> environment variable so cookies survive redeploys.
+        </div>
+    </section>
+
+    <!-- How-to Guide -->
+    <section class="howto-section">
+        <h2 class="section-title">How to Use Everything Downloader</h2>
+        <p class="section-subtitle">Quick guides for the most popular platforms</p>
+        <div class="howto-grid">
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-camera"/></svg></span>
+                    <span class="gc-title">Instagram Reels &amp; Stories</span>
+                </div>
+                <div class="gc-body">Open the Reel or Story, tap <strong>⋯ → Copy Link</strong>. Paste it here, choose <strong>Video</strong> or <strong>Audio</strong>, and download. Works for posts, Reels, and public Stories.</div>
+            </div>
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-music"/></svg></span>
+                    <span class="gc-title">TikTok Videos</span>
+                </div>
+                <div class="gc-body">Tap <strong>Share → Copy Link</strong> on any TikTok. Paste the link, select your format, and hit download. Supports both videos and slideshows.</div>
+            </div>
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-message"/></svg></span>
+                    <span class="gc-title">Twitter / X Videos</span>
+                </div>
+                <div class="gc-body">Click the share icon on the tweet → <strong>Copy link to post</strong>. Paste it here and select <strong>Video (MP4)</strong>. Works for embedded and native Twitter videos.</div>
+            </div>
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-globe"/></svg></span>
+                    <span class="gc-title">Facebook Videos</span>
+                </div>
+                <div class="gc-body">Right-click the video → <strong>Copy link address</strong>, or use the share button on mobile. Paste the URL and download. Public videos only.</div>
+            </div>
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-bookmark"/></svg></span>
+                    <span class="gc-title">Reddit Videos</span>
+                </div>
+                <div class="gc-body">Tap <strong>Share → Copy Link</strong> on any Reddit post with video. Paste it here — the tool merges Reddit's separate video and audio streams automatically.</div>
+            </div>
+            <div class="guide-card">
+                <div class="gc-head">
+                    <span class="gc-num"><svg style="width:14px;height:14px;fill:#fff"><use href="#i-headphones"/></svg></span>
+                    <span class="gc-title">SoundCloud &amp; Audio</span>
+                </div>
+                <div class="gc-body">Copy the track or playlist URL from SoundCloud, Bandcamp, or any audio site. Select <strong>Audio (MP3)</strong> for the best result.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security & Privacy -->
+    <section class="security-section">
+        <h2 class="section-title">Security &amp; Privacy</h2>
+        <p class="section-subtitle">Your privacy is a priority — here's how we keep things safe</p>
+        <div class="security-grid">
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-shield"/></svg></div>
+                <h3>No Data Stored</h3>
+                <p>Downloaded files are auto-deleted after 1 hour. Nothing is kept on our servers permanently.</p>
+            </div>
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-user"/></svg></div>
+                <h3>No Account Needed</h3>
+                <p>No sign-ups, no logins, no personal information collected. Just paste a link and download.</p>
+            </div>
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-eye"/></svg></div>
+                <h3>No Tracking or Ads</h3>
+                <p>Zero analytics trackers, no ads, no third-party scripts. Your browsing stays private.</p>
+            </div>
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-cookie"/></svg></div>
+                <h3>Cookies Stay Safe</h3>
+                <p>If you provide cookies for YouTube, they are only used for authentication and never shared or logged.</p>
+            </div>
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-folder"/></svg></div>
+                <h3>Open Source</h3>
+                <p>The entire codebase is public on GitHub. Audit every line of code yourself.</p>
+            </div>
+            <div class="sec-card">
+                <div class="sec-icon"><svg><use href="#i-globe"/></svg></div>
+                <h3>HTTPS Encrypted</h3>
+                <p>All traffic between your browser and the server is encrypted over HTTPS.</p>
+            </div>
         </div>
     </section>
 
