@@ -2,7 +2,12 @@ import os
 import threading
 import uuid
 import time
+import tempfile
+import atexit
+import http.cookiejar
+import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 from flask import (
     Flask,
@@ -18,14 +23,77 @@ app = Flask(__name__)
 DOWNLOAD_DIR = Path(__file__).parent / "downloads"
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
-COOKIES_FILE = Path(__file__).parent / "cookies.txt"
-BROWSER_FILE = Path(__file__).parent / ".cookie_browser"
-
 # Auto-cleanup files older than 1 hour
 MAX_FILE_AGE = 3600
 
+# YouTube player clients to try (bypass age restrictions without cookies)
+YT_PLAYER_CLIENTS = ["android_creator", "mediaconnect", "web_creator", "android", "ios"]
+
 # In-memory task store {task_id: {status, progress, ...}}
 tasks: dict[str, dict] = {}
+
+# Browser-like headers shared by all requests
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Sec-Fetch-Mode": "navigate",
+}
+
+# ---------------------------------------------------------------------------
+# Per-platform cookie definitions (non-authenticated, consent/visitor only)
+# ---------------------------------------------------------------------------
+_PLATFORM_COOKIES: dict[str, list[tuple[str, str, str]]] = {
+    # (name, value, domain)
+    ".youtube.com": [
+        ("SOCS", "CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjQwNDIxLjA3X3AxGgJlbiADGgYIgJy2sgY", ".youtube.com"),
+        ("CONSENT", "PENDING+987", ".youtube.com"),
+        ("GPS", "1", ".youtube.com"),
+        ("VISITOR_INFO1_LIVE", "OmxCGPeCF98", ".youtube.com"),
+        ("YSC", "DsLg2m1xJQo", ".youtube.com"),
+        ("PREF", "f4=4000000&tz=America.New_York&f6=40000000", ".youtube.com"),
+    ],
+    ".tiktok.com": [
+        ("tt_csrf_token", "auto", ".tiktok.com"),
+        ("tt_webid_v2", "7355000000000000000", ".tiktok.com"),
+        ("ttwid", "1%7Cauto%7C1700000000%7Cab1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab", ".tiktok.com"),
+        ("tt_chain_token", "auto", ".tiktok.com"),
+        ("cookie-consent", "{%22ga%22:true,%22af%22:true,%22fbp%22:true,%22lip%22:true%2C%22bing%22:true}", ".tiktok.com"),
+    ],
+    ".instagram.com": [
+        ("ig_did", "A0000000-0000-0000-0000-000000000000", ".instagram.com"),
+        ("ig_nrcb", "1", ".instagram.com"),
+        ("csrftoken", "auto", ".instagram.com"),
+        ("mid", "Zm0AAAAAAAAAAAAAAAAAAA", ".instagram.com"),
+        ("datr", "auto", ".instagram.com"),
+    ],
+    ".twitter.com": [
+        ("guest_id", "v1%3A170000000000000000", ".twitter.com"),
+        ("gt", "1700000000000000000", ".twitter.com"),
+        ("d_prefs", "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw", ".twitter.com"),
+        ("guest_id_ads", "v1%3A170000000000000000", ".twitter.com"),
+        ("guest_id_marketing", "v1%3A170000000000000000", ".twitter.com"),
+    ],
+    ".x.com": [
+        ("guest_id", "v1%3A170000000000000000", ".x.com"),
+        ("gt", "1700000000000000000", ".x.com"),
+        ("d_prefs", "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw", ".x.com"),
+    ],
+    ".facebook.com": [
+        ("datr", "auto", ".facebook.com"),
+        ("sb", "auto", ".facebook.com"),
+        ("locale", "en_US", ".facebook.com"),
+        ("wd", "1920x1080", ".facebook.com"),
+    ],
+    ".reddit.com": [
+        ("csv", "2", ".reddit.com"),
+        ("edgebucket", "auto", ".reddit.com"),
+    ],
+}
 
 
 # ---------------------------------------------------------------------------
@@ -45,15 +113,72 @@ def _cleanup_old_files():
             pass
 
 
-def _cookie_opts() -> dict:
-    """Return yt-dlp cookie options. Prefers browser extraction, falls back to file."""
-    if BROWSER_FILE.is_file():
-        browser = BROWSER_FILE.read_text().strip()
-        if browser:
-            return {"cookiesfrombrowser": (browser,)}
-    if COOKIES_FILE.is_file():
-        return {"cookiefile": str(COOKIES_FILE)}
-    return {}
+# Cached cookie file path
+_COOKIE_JAR_PATH: str | None = None
+
+
+def _get_cookie_file() -> str:
+    """Build a Netscape cookie file containing consent cookies for all platforms."""
+    global _COOKIE_JAR_PATH
+    if _COOKIE_JAR_PATH and os.path.isfile(_COOKIE_JAR_PATH):
+        return _COOKIE_JAR_PATH
+
+    jar = http.cookiejar.MozillaCookieJar()
+    expires = int(time.time()) + 365 * 24 * 3600
+
+    for domain, cookies in _PLATFORM_COOKIES.items():
+        for name, value, cookie_domain in cookies:
+            jar.set_cookie(http.cookiejar.Cookie(
+                version=0, name=name, value=value,
+                port=None, port_specified=False,
+                domain=cookie_domain, domain_specified=True,
+                domain_initial_dot=cookie_domain.startswith("."),
+                path="/", path_specified=True,
+                secure=True, expires=expires, discard=False,
+                comment=None, comment_url=None,
+                rest={"HttpOnly": ""},
+            ))
+
+    fd, path = tempfile.mkstemp(suffix=".txt", prefix="dl_cookies_")
+    os.close(fd)
+    jar.save(path, ignore_discard=True, ignore_expires=True)
+    _COOKIE_JAR_PATH = path
+    atexit.register(lambda: os.unlink(path) if os.path.isfile(path) else None)
+    return path
+
+
+def _detect_platform(url: str) -> str:
+    """Return a platform key from the URL for logging/detection."""
+    try:
+        host = urlparse(url).hostname or ""
+    except Exception:
+        return "unknown"
+    host = host.lower()
+    for key in ("youtube", "youtu.be", "tiktok", "instagram", "twitter",
+                "x.com", "facebook", "fb.watch", "reddit", "vimeo",
+                "soundcloud", "twitch", "dailymotion", "bandcamp", "threads"):
+        if key in host:
+            return key.replace(".com", "").replace(".be", "")
+    return "other"
+
+
+def _base_opts() -> dict:
+    """Base yt-dlp options: cookies, headers, speed optimisations."""
+    return {
+        "cookiefile": _get_cookie_file(),
+        "http_headers": _HEADERS,
+        "extractor_args": {
+            "youtube": {"player_client": YT_PLAYER_CLIENTS},
+        },
+        # Speed optimisations
+        "concurrent_fragment_downloads": 8,
+        "buffersize": 1024 * 64,       # 64 KB buffer
+        "http_chunk_size": 10485760,    # 10 MB chunks
+        "retries": 5,
+        "fragment_retries": 5,
+        "socket_timeout": 30,
+        "noprogress": True,
+    }
 
 
 def _progress_hook(task_id):
@@ -84,7 +209,7 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
             "restrictfilenames": True,
             "quiet": True,
             "no_warnings": True,
-            **_cookie_opts(),
+            **_base_opts(),
         }
 
         if fmt == "audio":
@@ -96,6 +221,17 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                     "preferredquality": "192",
                 }
             ]
+        elif fmt == "image":
+            # Download the thumbnail / image at best quality
+            ydl_opts["skip_download"] = True
+            ydl_opts["writethumbnail"] = True
+            ydl_opts["outtmpl"] = str(DOWNLOAD_DIR / "%(title)s.%(ext)s")
+            ydl_opts["postprocessors"] = []
+        elif fmt == "gif":
+            # Download video and convert to GIF via ffmpeg
+            ydl_opts["format"] = "bestvideo[height<=480][ext=mp4]/bestvideo[height<=480]/best[height<=480]/best"
+            ydl_opts["merge_output_format"] = "mp4"
+            # We'll convert to GIF after download in a post-step
         elif fmt == "video":
             quality_map = {
                 "best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
@@ -119,11 +255,7 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                 filenames = []
                 for entry in entries:
                     if entry:
-                        fname = ydl.prepare_filename(entry)
-                        if fmt == "audio":
-                            fname = Path(fname).with_suffix(".mp3").name
-                        else:
-                            fname = Path(fname).name
+                        fname = _resolve_filename(ydl, entry, fmt)
                         filenames.append(fname)
                 tasks[task_id].update(
                     status="done",
@@ -132,11 +264,13 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                     title=info.get("title", "Playlist"),
                 )
             else:
-                fname = ydl.prepare_filename(info)
-                if fmt == "audio":
-                    fname = Path(fname).with_suffix(".mp3").name
-                else:
-                    fname = Path(fname).name
+                fname = _resolve_filename(ydl, info, fmt)
+
+                # GIF conversion: ffmpeg mp4 → gif (first 15s, max 480px wide)
+                if fmt == "gif":
+                    tasks[task_id].update(status="processing", progress=100)
+                    fname = _convert_to_gif(fname)
+
                 tasks[task_id].update(
                     status="done",
                     progress=100,
@@ -145,6 +279,50 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                 )
     except Exception as exc:
         tasks[task_id].update(status="error", error=str(exc))
+
+
+def _resolve_filename(ydl, info: dict, fmt: str) -> str:
+    """Work out the final on-disk filename based on format."""
+    fname = ydl.prepare_filename(info)
+    if fmt == "audio":
+        return Path(fname).with_suffix(".mp3").name
+    if fmt == "image":
+        # yt-dlp writes thumbnail next to video; find the image file
+        base = Path(fname).stem
+        for ext in (".jpg", ".png", ".webp", ".jpeg"):
+            candidate = DOWNLOAD_DIR / (base + ext)
+            if candidate.is_file():
+                return candidate.name
+        # fallback: return original name (thumbnail may have .webp etc)
+        return Path(fname).name
+    return Path(fname).name
+
+
+def _convert_to_gif(video_filename: str) -> str:
+    """Convert a downloaded video to a GIF (first 15 seconds, 480px wide, 12fps)."""
+    import subprocess
+    src = DOWNLOAD_DIR / video_filename
+    gif_name = Path(video_filename).with_suffix(".gif").name
+    dst = DOWNLOAD_DIR / gif_name
+    try:
+        subprocess.run(
+            [
+                "ffmpeg", "-y", "-i", str(src),
+                "-t", "15",
+                "-vf", "fps=12,scale=480:-1:flags=lanczos",
+                "-loop", "0",
+                str(dst),
+            ],
+            capture_output=True, timeout=120,
+        )
+        # Remove source video after conversion
+        if dst.is_file():
+            src.unlink(missing_ok=True)
+            return gif_name
+    except Exception:
+        pass
+    # If conversion fails, return the original video
+    return video_filename
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +342,7 @@ def get_info():
         return jsonify(error="URL is required"), 400
 
     try:
-        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, **_cookie_opts()}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, **_base_opts()}) as ydl:
             info = ydl.extract_info(url, download=False)
             if info is None:
                 return jsonify(error="Could not extract info"), 400
@@ -240,58 +418,13 @@ def serve_file(filename):
     return send_from_directory(DOWNLOAD_DIR, safe_name, as_attachment=True)
 
 
-@app.route("/api/cookies", methods=["POST"])
-def upload_cookies():
-    """Upload a cookies.txt file (Netscape format)."""
-    f = request.files.get("file")
-    if not f:
-        return jsonify(error="No file uploaded"), 400
-    content = f.read().decode("utf-8", errors="replace")
-    if not content.strip():
-        return jsonify(error="File is empty"), 400
-    COOKIES_FILE.write_text(content)
-    return jsonify(ok=True, message="Cookies saved successfully")
-
-
-@app.route("/api/cookies", methods=["DELETE"])
-def delete_cookies():
-    """Remove the cookies.txt file."""
-    if COOKIES_FILE.is_file():
-        COOKIES_FILE.unlink()
-    return jsonify(ok=True, message="Cookies removed")
-
-
-@app.route("/api/cookies", methods=["GET"])
-def cookies_status():
-    """Check if cookies are configured."""
-    browser = ""
-    if BROWSER_FILE.is_file():
-        browser = BROWSER_FILE.read_text().strip()
+@app.route("/api/status")
+def server_status():
+    """Health check endpoint."""
     return jsonify(
-        has_cookies=COOKIES_FILE.is_file() or bool(browser),
-        method="browser" if browser else ("file" if COOKIES_FILE.is_file() else "none"),
-        browser=browser,
+        ok=True,
+        bypass_clients=YT_PLAYER_CLIENTS,
     )
-
-
-@app.route("/api/cookies/browser", methods=["POST"])
-def set_browser_cookies():
-    """Set browser cookie extraction (local use only)."""
-    data = request.get_json(force=True)
-    browser = data.get("browser", "").strip().lower()
-    valid = ["chrome", "firefox", "edge", "safari", "opera", "brave", "chromium", "vivaldi"]
-    if browser not in valid:
-        return jsonify(error=f"Invalid browser. Choose from: {', '.join(valid)}"), 400
-    BROWSER_FILE.write_text(browser)
-    return jsonify(ok=True, browser=browser)
-
-
-@app.route("/api/cookies/browser", methods=["DELETE"])
-def remove_browser_cookies():
-    """Remove browser cookie config."""
-    if BROWSER_FILE.is_file():
-        BROWSER_FILE.unlink()
-    return jsonify(ok=True)
 
 
 # ---------------------------------------------------------------------------

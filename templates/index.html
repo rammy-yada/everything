@@ -789,93 +789,6 @@
         .btn-clear-history:hover { border-color: var(--danger); color: var(--danger); }
 
         /* ================================================================
-           COOKIE PANEL
-           ================================================================ */
-        .cookie-banner {
-            display: none;
-            background: var(--surface);
-            border: 1px solid var(--warning);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            margin: 16px 0;
-            animation: slideDown .3s;
-        }
-        .cookie-banner.show { display: block; }
-        .cookie-banner .cb-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            font-size: .95rem;
-            margin-bottom: 8px;
-            color: var(--warning);
-        }
-        .cookie-banner .cb-header svg { width: 18px; height: 18px; fill: currentColor; }
-        .cookie-banner p {
-            font-size: .85rem;
-            color: var(--text2);
-            line-height: 1.5;
-            margin-bottom: 12px;
-        }
-        .cookie-banner code {
-            background: var(--surface2);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: .82rem;
-        }
-        .cookie-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .cookie-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: .85rem;
-            padding: 6px 14px;
-            border-radius: 99px;
-            font-weight: 500;
-        }
-        .cookie-status.active {
-            background: var(--success-bg);
-            color: var(--success);
-        }
-        .cookie-status.inactive {
-            background: var(--danger-bg);
-            color: var(--danger);
-        }
-        .cookie-status svg { width: 14px; height: 14px; fill: currentColor; }
-        .btn-cookie-upload {
-            padding: 8px 18px;
-            border-radius: var(--radius-sm);
-            border: 1.5px solid var(--accent);
-            background: transparent;
-            color: var(--accent);
-            font-size: .85rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all var(--transition);
-        }
-        .btn-cookie-upload:hover { background: var(--accent-glow); }
-        .btn-cookie-upload svg { width: 14px; height: 14px; fill: currentColor; }
-        .btn-cookie-remove {
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text3);
-            font-size: .82rem;
-            cursor: pointer;
-            transition: all var(--transition);
-        }
-        .btn-cookie-remove:hover { border-color: var(--danger); color: var(--danger); }
-
-        /* ================================================================
            FOOTER
            ================================================================ */
         footer {
@@ -1000,6 +913,10 @@
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></symbol>
     <!-- Shield -->
     <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></symbol>
+    <!-- Image / photo -->
+    <symbol id="i-image" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></symbol>
+    <!-- GIF -->
+    <symbol id="i-gif" viewBox="0 0 24 24"><path d="M11.5 9H13v6h-1.5V9zM9 9H6c-.6 0-1 .5-1 1v4c0 .5.4 1 1 1h3c.6 0 1-.5 1-1v-2H8.5v1.5h-2v-3H10V10c0-.5-.4-1-1-1zm10 1.5V9h-4.5v6H16v-2h2v-1.5h-2v-1h3z"/></symbol>
 </svg>
 
 <!-- ====== NAV ====== -->
@@ -1011,9 +928,6 @@
         <span class="logo-text">Everything</span>
     </div>
     <div class="nav-right">
-        <button class="theme-toggle tooltip" data-tip="Cookie settings" onclick="toggleCookiePanel()" id="cookieBtn" aria-label="Cookie settings">
-            <svg style="width:18px;height:18px;fill:currentColor;"><use href="#i-cookie"/></svg>
-        </button>
         <button class="theme-toggle tooltip" data-tip="Toggle theme" onclick="toggleTheme()" id="themeBtn" aria-label="Toggle theme">
             <svg id="themeSvgMoon"><use href="#i-moon"/></svg>
             <svg id="themeSvgSun" style="display:none;"><use href="#i-sun"/></svg>
@@ -1024,7 +938,7 @@
 <!-- ====== HERO ====== -->
 <section class="hero">
     <h1>Download Everything</h1>
-    <p>Paste any link from YouTube, TikTok, Instagram, Twitter/X, and 1000+ other sites — grab video or audio instantly.</p>
+    <p>Paste any link from YouTube, TikTok, Instagram, Twitter/X, and 1000+ other sites — grab video, audio, images, or GIFs instantly.</p>
 </section>
 
 <!-- ====== MAIN ====== -->
@@ -1051,64 +965,12 @@
         <div class="step">
             <div class="step-icon"><svg><use href="#i-settings"/></svg></div>
             <h4>Choose Format</h4>
-            <p>Pick video (MP4), audio (MP3), or best available quality</p>
+            <p>Pick video, audio, image thumbnail, GIF, or best quality</p>
         </div>
         <div class="step">
             <div class="step-icon"><svg><use href="#i-download"/></svg></div>
             <h4>Download</h4>
             <p>Hit download and save the file directly to your device</p>
-        </div>
-    </div>
-
-    <!-- Cookie Panel -->
-    <div class="cookie-banner" id="cookiePanel">
-        <div class="cb-header">
-            <svg><use href="#i-shield"/></svg>
-            YouTube Cookie Authentication
-        </div>
-        <p>
-            YouTube may block downloads with a "Sign in to confirm you're not a bot" error.
-            Fix it using <strong>either</strong> method below:
-        </p>
-
-        <p style="margin-bottom:6px;"><strong>Method 1: Auto-extract from browser (easiest, local only)</strong></p>
-        <p style="margin-bottom:10px;">
-            Pick your browser and we'll grab cookies automatically. No extension needed.
-        </p>
-        <div class="cookie-actions" style="margin-bottom:18px;">
-            <select id="browserSelect" style="padding:8px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-size:.88rem;">
-                <option value="">Select browser...</option>
-                <option value="chrome">Chrome</option>
-                <option value="firefox">Firefox</option>
-                <option value="edge">Edge</option>
-                <option value="safari">Safari</option>
-                <option value="brave">Brave</option>
-                <option value="opera">Opera</option>
-                <option value="chromium">Chromium</option>
-                <option value="vivaldi">Vivaldi</option>
-            </select>
-            <button class="btn-cookie-upload" onclick="setBrowserCookies()">
-                <svg><use href="#i-settings"/></svg> Use This Browser
-            </button>
-        </div>
-
-        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-        <p style="margin-bottom:6px;"><strong>Method 2: Upload cookies.txt (works on deployed servers too)</strong></p>
-        <p style="margin-bottom:10px;font-size:.85rem;color:var(--text2);">
-            1. Install <strong>"Get cookies.txt LOCALLY"</strong> extension (<a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank" rel="noopener" style="color:var(--accent);">Chrome</a> / <a href="https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/" target="_blank" rel="noopener" style="color:var(--accent);">Firefox</a>)
-            &nbsp;2. Go to youtube.com while logged in
-            &nbsp;3. Export cookies.txt
-            &nbsp;4. Upload below
-        </p>
-
-        <div class="cookie-actions">
-            <span class="cookie-status" id="cookieStatus"></span>
-            <label class="btn-cookie-upload">
-                <svg><use href="#i-upload"/></svg> Upload cookies.txt
-                <input type="file" accept=".txt" id="cookieFileInput" onchange="uploadCookies()" style="display:none;">
-            </label>
-            <button class="btn-cookie-remove" id="cookieRemoveBtn" onclick="removeCookies()" style="display:none;">Remove All</button>
         </div>
     </div>
 
@@ -1136,6 +998,8 @@
             <select id="formatSelect" onchange="onFormatChange()">
                 <option value="video">Video (MP4)</option>
                 <option value="audio">Audio (MP3)</option>
+                <option value="image">Image (Thumbnail)</option>
+                <option value="gif">GIF (Animated)</option>
                 <option value="best">Best Available</option>
             </select>
             <select id="qualitySelect">
@@ -1163,6 +1027,8 @@
             <select id="plFormatSelect">
                 <option value="video">Video (MP4)</option>
                 <option value="audio">Audio (MP3)</option>
+                <option value="image">Image (Thumbnail)</option>
+                <option value="gif">GIF (Animated)</option>
                 <option value="best">Best Available</option>
             </select>
             <select id="plQualitySelect">
@@ -1242,7 +1108,7 @@
                     <span class="gc-num">3</span>
                     <span class="gc-title">Pick Format &amp; Quality</span>
                 </div>
-                <div class="gc-body">Choose <strong>Video (MP4)</strong> for video, <strong>Audio (MP3)</strong> for music, or <strong>Best Available</strong> for maximum quality. Select a resolution if downloading video.</div>
+                <div class="gc-body">Choose <strong>Video (MP4)</strong> for video, <strong>Audio (MP3)</strong> for music, <strong>Image</strong> to grab the thumbnail, or <strong>GIF</strong> to create an animated clip. Select a resolution if downloading video.</div>
             </div>
             <div class="guide-card">
                 <div class="gc-head">
@@ -1253,7 +1119,7 @@
             </div>
         </div>
         <div class="guide-note">
-            <strong>Age-restricted or "Sign in" errors?</strong> YouTube may block requests that lack authentication. Click the <svg style="width:14px;height:14px;vertical-align:-2px;fill:currentColor"><use href="#i-cookie"/></svg> cookie icon in the top bar to set up cookies from your browser &mdash; this lets the downloader access videos as if you were signed in.
+            <strong>Age-restricted or "Sign in" errors?</strong> This app automatically uses alternate YouTube player clients (Android, iOS) that bypass age restrictions &mdash; no login or cookies needed. If a download still fails, the video may be private or region-locked.
         </div>
     </section>
 
@@ -1281,7 +1147,7 @@
                 <span>What's the difference between Video, Audio, and Best?</span>
                 <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
             </div>
-            <div class="faq-a"><strong>Video (MP4)</strong> gives you a standard video file. <strong>Audio (MP3)</strong> extracts just the audio track. <strong>Best Available</strong> downloads the highest quality format the site offers, which might be in a different container format.</div>
+            <div class="faq-a"><strong>Video (MP4)</strong> gives you a standard video file. <strong>Audio (MP3)</strong> extracts just the audio track. <strong>Image</strong> saves the video thumbnail as a picture. <strong>GIF</strong> converts the first 15 seconds into an animated GIF. <strong>Best Available</strong> downloads the highest quality format the site offers.</div>
         </div>
         <div class="faq-item">
             <div class="faq-q" onclick="toggleFaq(this)">
@@ -1402,7 +1268,7 @@
     /* ---- Format change: hide quality for audio ---- */
     window.onFormatChange = function() {
         const fmt = $("formatSelect").value;
-        $("qualitySelect").style.display = fmt === "audio" ? "none" : "";
+        $("qualitySelect").style.display = (fmt === "audio" || fmt === "image" || fmt === "gif") ? "none" : "";
     };
 
     /* ---- Fetch Info ---- */
@@ -1620,88 +1486,9 @@
         if (e.key === "Enter") window.fetchInfo();
     });
 
-    /* ---- Cookie Management ---- */
-    window.toggleCookiePanel = function() {
-        $("cookiePanel").classList.toggle("show");
-    };
-
-    async function checkCookieStatus() {
-        try {
-            const res = await fetch("/api/cookies");
-            const data = await res.json();
-            const el = $("cookieStatus");
-            const removeBtn = $("cookieRemoveBtn");
-            if (data.has_cookies) {
-                el.className = "cookie-status active";
-                if (data.method === "browser") {
-                    el.innerHTML = `${svgIcon("i-check")} Using ${data.browser} cookies`;
-                    $("browserSelect").value = data.browser;
-                } else {
-                    el.innerHTML = `${svgIcon("i-check")} cookies.txt active`;
-                }
-                removeBtn.style.display = "";
-            } else {
-                el.className = "cookie-status inactive";
-                el.innerHTML = `${svgIcon("i-warning")} No cookies`;
-                removeBtn.style.display = "none";
-            }
-        } catch {}
-    }
-
-    window.setBrowserCookies = async function() {
-        const browser = $("browserSelect").value;
-        if (!browser) { showError("Please select a browser first."); return; }
-        try {
-            const res = await fetch("/api/cookies/browser", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({browser})
-            });
-            const data = await res.json();
-            if (data.ok) {
-                checkCookieStatus();
-            } else {
-                showError(data.error || "Failed to set browser.");
-            }
-        } catch (e) {
-            showError("Error: " + e.message);
-        }
-    };
-
-    window.uploadCookies = async function() {
-        const input = $("cookieFileInput");
-        const file = input.files[0];
-        if (!file) return;
-        const formData = new FormData();
-        formData.append("file", file);
-        try {
-            const res = await fetch("/api/cookies", { method: "POST", body: formData });
-            const data = await res.json();
-            if (data.ok) {
-                // Remove browser config if file is uploaded (file takes priority)
-                await fetch("/api/cookies/browser", { method: "DELETE" });
-                checkCookieStatus();
-            } else {
-                showError(data.error || "Failed to upload cookies.");
-            }
-        } catch (e) {
-            showError("Upload failed: " + e.message);
-        }
-        input.value = "";
-    };
-
-    window.removeCookies = async function() {
-        try {
-            await fetch("/api/cookies", { method: "DELETE" });
-            await fetch("/api/cookies/browser", { method: "DELETE" });
-            checkCookieStatus();
-        } catch {}
-    };
-
     /* ---- Init ---- */
     initTheme();
     loadHistory();
-    checkCookieStatus();
 
 })();
 </script>
