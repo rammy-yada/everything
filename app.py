@@ -2,9 +2,7 @@ import os
 import threading
 import uuid
 import time
-import tempfile
-import atexit
-import http.cookiejar
+import base64
 import re
 from pathlib import Path
 from urllib.parse import urlparse
@@ -23,16 +21,18 @@ app = Flask(__name__)
 DOWNLOAD_DIR = Path(__file__).parent / "downloads"
 DOWNLOAD_DIR.mkdir(exist_ok=True)
 
+COOKIES_FILE = Path(__file__).parent / "cookies.txt"
+
 # Auto-cleanup files older than 1 hour
 MAX_FILE_AGE = 3600
 
-# YouTube player clients to try (bypass age restrictions without cookies)
+# YouTube player clients to try (bypass age restrictions)
 YT_PLAYER_CLIENTS = ["android_creator", "mediaconnect", "web_creator", "android", "ios"]
 
 # In-memory task store {task_id: {status, progress, ...}}
 tasks: dict[str, dict] = {}
 
-# Browser-like headers shared by all requests
+# Browser-like headers
 _HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -41,59 +41,25 @@ _HEADERS = {
     ),
     "Accept-Language": "en-US,en;q=0.9",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Sec-Fetch-Mode": "navigate",
 }
 
+
 # ---------------------------------------------------------------------------
-# Per-platform cookie definitions (non-authenticated, consent/visitor only)
+# Cookie management — real cookies required for YouTube on datacenter IPs
 # ---------------------------------------------------------------------------
-_PLATFORM_COOKIES: dict[str, list[tuple[str, str, str]]] = {
-    # (name, value, domain)
-    ".youtube.com": [
-        ("SOCS", "CAISNQgDEitib3FfaWRlbnRpdHlmcm9udGVuZHVpc2VydmVyXzIwMjQwNDIxLjA3X3AxGgJlbiADGgYIgJy2sgY", ".youtube.com"),
-        ("CONSENT", "PENDING+987", ".youtube.com"),
-        ("GPS", "1", ".youtube.com"),
-        ("VISITOR_INFO1_LIVE", "OmxCGPeCF98", ".youtube.com"),
-        ("YSC", "DsLg2m1xJQo", ".youtube.com"),
-        ("PREF", "f4=4000000&tz=America.New_York&f6=40000000", ".youtube.com"),
-    ],
-    ".tiktok.com": [
-        ("tt_csrf_token", "auto", ".tiktok.com"),
-        ("tt_webid_v2", "7355000000000000000", ".tiktok.com"),
-        ("ttwid", "1%7Cauto%7C1700000000%7Cab1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab", ".tiktok.com"),
-        ("tt_chain_token", "auto", ".tiktok.com"),
-        ("cookie-consent", "{%22ga%22:true,%22af%22:true,%22fbp%22:true,%22lip%22:true%2C%22bing%22:true}", ".tiktok.com"),
-    ],
-    ".instagram.com": [
-        ("ig_did", "A0000000-0000-0000-0000-000000000000", ".instagram.com"),
-        ("ig_nrcb", "1", ".instagram.com"),
-        ("csrftoken", "auto", ".instagram.com"),
-        ("mid", "Zm0AAAAAAAAAAAAAAAAAAA", ".instagram.com"),
-        ("datr", "auto", ".instagram.com"),
-    ],
-    ".twitter.com": [
-        ("guest_id", "v1%3A170000000000000000", ".twitter.com"),
-        ("gt", "1700000000000000000", ".twitter.com"),
-        ("d_prefs", "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw", ".twitter.com"),
-        ("guest_id_ads", "v1%3A170000000000000000", ".twitter.com"),
-        ("guest_id_marketing", "v1%3A170000000000000000", ".twitter.com"),
-    ],
-    ".x.com": [
-        ("guest_id", "v1%3A170000000000000000", ".x.com"),
-        ("gt", "1700000000000000000", ".x.com"),
-        ("d_prefs", "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw", ".x.com"),
-    ],
-    ".facebook.com": [
-        ("datr", "auto", ".facebook.com"),
-        ("sb", "auto", ".facebook.com"),
-        ("locale", "en_US", ".facebook.com"),
-        ("wd", "1920x1080", ".facebook.com"),
-    ],
-    ".reddit.com": [
-        ("csv", "2", ".reddit.com"),
-        ("edgebucket", "auto", ".reddit.com"),
-    ],
-}
+
+def _init_cookies_from_env():
+    """On startup, write YT_COOKIES env var (base64 of cookies.txt) to disk."""
+    env_cookies = os.environ.get("YT_COOKIES", "").strip()
+    if env_cookies and not COOKIES_FILE.is_file():
+        try:
+            raw = base64.b64decode(env_cookies)
+            COOKIES_FILE.write_bytes(raw)
+        except Exception:
+            pass
+
+
+_init_cookies_from_env()
 
 
 # ---------------------------------------------------------------------------
@@ -113,72 +79,26 @@ def _cleanup_old_files():
             pass
 
 
-# Cached cookie file path
-_COOKIE_JAR_PATH: str | None = None
-
-
-def _get_cookie_file() -> str:
-    """Build a Netscape cookie file containing consent cookies for all platforms."""
-    global _COOKIE_JAR_PATH
-    if _COOKIE_JAR_PATH and os.path.isfile(_COOKIE_JAR_PATH):
-        return _COOKIE_JAR_PATH
-
-    jar = http.cookiejar.MozillaCookieJar()
-    expires = int(time.time()) + 365 * 24 * 3600
-
-    for domain, cookies in _PLATFORM_COOKIES.items():
-        for name, value, cookie_domain in cookies:
-            jar.set_cookie(http.cookiejar.Cookie(
-                version=0, name=name, value=value,
-                port=None, port_specified=False,
-                domain=cookie_domain, domain_specified=True,
-                domain_initial_dot=cookie_domain.startswith("."),
-                path="/", path_specified=True,
-                secure=True, expires=expires, discard=False,
-                comment=None, comment_url=None,
-                rest={"HttpOnly": ""},
-            ))
-
-    fd, path = tempfile.mkstemp(suffix=".txt", prefix="dl_cookies_")
-    os.close(fd)
-    jar.save(path, ignore_discard=True, ignore_expires=True)
-    _COOKIE_JAR_PATH = path
-    atexit.register(lambda: os.unlink(path) if os.path.isfile(path) else None)
-    return path
-
-
-def _detect_platform(url: str) -> str:
-    """Return a platform key from the URL for logging/detection."""
-    try:
-        host = urlparse(url).hostname or ""
-    except Exception:
-        return "unknown"
-    host = host.lower()
-    for key in ("youtube", "youtu.be", "tiktok", "instagram", "twitter",
-                "x.com", "facebook", "fb.watch", "reddit", "vimeo",
-                "soundcloud", "twitch", "dailymotion", "bandcamp", "threads"):
-        if key in host:
-            return key.replace(".com", "").replace(".be", "")
-    return "other"
-
-
 def _base_opts() -> dict:
     """Base yt-dlp options: cookies, headers, speed optimisations."""
-    return {
-        "cookiefile": _get_cookie_file(),
+    opts: dict = {
         "http_headers": _HEADERS,
         "extractor_args": {
             "youtube": {"player_client": YT_PLAYER_CLIENTS},
         },
         # Speed optimisations
         "concurrent_fragment_downloads": 8,
-        "buffersize": 1024 * 64,       # 64 KB buffer
-        "http_chunk_size": 10485760,    # 10 MB chunks
+        "buffersize": 1024 * 64,
+        "http_chunk_size": 10485760,
         "retries": 5,
         "fragment_retries": 5,
         "socket_timeout": 30,
         "noprogress": True,
     }
+    # Only pass cookiefile if we have one — avoids yt-dlp creating empty file
+    if COOKIES_FILE.is_file() and COOKIES_FILE.stat().st_size > 10:
+        opts["cookiefile"] = str(COOKIES_FILE)
+    return opts
 
 
 def _progress_hook(task_id):
@@ -418,13 +338,39 @@ def serve_file(filename):
     return send_from_directory(DOWNLOAD_DIR, safe_name, as_attachment=True)
 
 
-@app.route("/api/status")
-def server_status():
-    """Health check endpoint."""
+@app.route("/api/cookies", methods=["GET"])
+def cookies_status():
+    """Check if cookies are configured."""
+    has_env = bool(os.environ.get("YT_COOKIES", "").strip())
+    has_file = COOKIES_FILE.is_file() and COOKIES_FILE.stat().st_size > 10
     return jsonify(
-        ok=True,
-        bypass_clients=YT_PLAYER_CLIENTS,
+        has_cookies=has_file,
+        source="env" if has_env else ("file" if has_file else "none"),
     )
+
+
+@app.route("/api/cookies", methods=["POST"])
+def upload_cookies():
+    """Upload a cookies.txt file (Netscape format)."""
+    f = request.files.get("file")
+    if not f:
+        return jsonify(error="No file uploaded"), 400
+    content = f.read().decode("utf-8", errors="replace")
+    if not content.strip():
+        return jsonify(error="File is empty"), 400
+    # Basic sanity check
+    if "# Netscape HTTP Cookie" not in content and "\t" not in content:
+        return jsonify(error="This doesn't look like a Netscape cookies.txt file. Export using the 'Get cookies.txt LOCALLY' extension."), 400
+    COOKIES_FILE.write_text(content)
+    return jsonify(ok=True, message="Cookies saved successfully")
+
+
+@app.route("/api/cookies", methods=["DELETE"])
+def delete_cookies():
+    """Remove the cookies.txt file."""
+    if COOKIES_FILE.is_file():
+        COOKIES_FILE.unlink()
+    return jsonify(ok=True)
 
 
 # ---------------------------------------------------------------------------
