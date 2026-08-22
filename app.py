@@ -1,4 +1,6 @@
 import os
+import shutil
+import subprocess
 import threading
 import uuid
 import time
@@ -122,6 +124,9 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
     try:
         _cleanup_old_files()
 
+        if fmt in ("audio", "video", "gif", "best") and not shutil.which("ffmpeg"):
+            raise RuntimeError("ffmpeg is required for compatible media downloads. Install ffmpeg and try again.")
+
         ydl_opts: dict = {
             "outtmpl": str(DOWNLOAD_DIR / "%(title)s.%(ext)s"),
             "progress_hooks": [_progress_hook(task_id)],
@@ -152,13 +157,13 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
             ydl_opts["format"] = "bestvideo[height<=480][ext=mp4]/bestvideo[height<=480]/best[height<=480]/best"
             ydl_opts["merge_output_format"] = "mp4"
             # We'll convert to GIF after download in a post-step
-        elif fmt == "video":
+        elif fmt in ("video", "best"):
             quality_map = {
-                "best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-                "1080": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]",
-                "720": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]",
-                "480": "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480]",
-                "360": "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360]",
+                "best": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best",
+                "1080": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+                "720": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=720]+bestaudio/best[height<=720]/best",
+                "480": "bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=480]+bestaudio/best[height<=480]/best",
+                "360": "bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=360]+bestaudio/best[height<=360]/best",
             }
             ydl_opts["format"] = quality_map.get(quality, quality_map["best"])
             ydl_opts["merge_output_format"] = "mp4"
@@ -176,6 +181,8 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                 for entry in entries:
                     if entry:
                         fname = _resolve_filename(ydl, entry, fmt)
+                        if fmt in ("video", "best"):
+                            fname = _normalize_video(task_id, fname)
                         filenames.append(fname)
                 tasks[task_id].update(
                     status="done",
@@ -185,6 +192,9 @@ def _run_download(task_id: str, url: str, fmt: str, quality: str):
                 )
             else:
                 fname = _resolve_filename(ydl, info, fmt)
+
+                if fmt in ("video", "best"):
+                    fname = _normalize_video(task_id, fname)
 
                 # GIF conversion: ffmpeg mp4 → gif (first 15s, max 480px wide)
                 if fmt == "gif":
@@ -216,6 +226,56 @@ def _resolve_filename(ydl, info: dict, fmt: str) -> str:
         # fallback: return original name (thumbnail may have .webp etc)
         return Path(fname).name
     return Path(fname).name
+
+
+def _normalize_video(task_id: str, video_filename: str) -> str:
+    """Transcode video to the H.264/AAC MP4 profile supported by editors."""
+    source = DOWNLOAD_DIR / video_filename
+    final_name = Path(video_filename).with_suffix(".mp4").name
+    destination = DOWNLOAD_DIR / (Path(final_name).stem + ".compatible.mp4")
+    probe = subprocess.run(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "v:0",
+            "-show_entries", "stream=codec_name,pix_fmt",
+            "-of", "default=noprint_wrappers=1:nokey=1", str(source),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    ).stdout.splitlines()
+    audio_probe = subprocess.run(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "a:0",
+            "-show_entries", "stream=codec_name",
+            "-of", "default=noprint_wrappers=1:nokey=1", str(source),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    ).stdout.strip()
+    compatible = probe[:2] == ["h264", "yuv420p"] and audio_probe in ("", "aac")
+    video_args = ["-c", "copy"] if compatible else [
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k",
+    ]
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-i", str(source),
+            "-map", "0:v:0", "-map", "0:a:0?",
+            *video_args,
+            "-movflags", "+faststart", str(destination),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=600,
+        check=True,
+    )
+    source.unlink(missing_ok=True)
+    final_path = DOWNLOAD_DIR / final_name
+    destination.replace(final_path)
+    return final_path.name
 
 
 def _convert_to_gif(video_filename: str) -> str:

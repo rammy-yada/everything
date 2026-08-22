@@ -140,6 +140,21 @@
             align-items: center;
             gap: 8px;
         }
+        .nav-link {
+            border: none;
+            background: transparent;
+            color: var(--text2);
+            font-size: .9rem;
+            font-weight: 600;
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--text);
+            background: var(--surface2);
+        }
         .theme-toggle {
             width: 40px;
             height: 40px;
@@ -184,6 +199,11 @@
             margin-left: auto;
             margin-right: auto;
         }
+        .about-hero { padding-bottom: 8px; }
+        .about-hero h1 { font-size: 2.2rem; }
+        .about-content { display: none; }
+        body.about-active .home-content { display: none !important; }
+        body.about-active .about-content { display: block; }
 
         /* ================================================================
            CONTAINER
@@ -203,9 +223,9 @@
             padding: 6px;
             box-shadow: var(--card-shadow);
             margin: 28px 0 0;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
             border: 1.5px solid var(--border);
             transition: border-color var(--transition);
         }
@@ -214,7 +234,7 @@
             box-shadow: var(--card-shadow), 0 0 0 3px var(--accent-glow);
         }
         .search-box input {
-            flex: 1;
+            width: 100%;
             padding: 14px 16px;
             border: none;
             background: transparent;
@@ -223,6 +243,12 @@
             outline: none;
         }
         .search-box input::placeholder { color: var(--text3); }
+
+        .search-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
         .btn-paste {
             padding: 10px 14px;
@@ -973,6 +999,10 @@
            RESPONSIVE
            ================================================================ */
         @media (max-width: 640px) {
+            nav { padding: 12px 16px; }
+            .logo-text { display: none; }
+            .nav-right { gap: 2px; }
+            .nav-link { padding: 8px 9px; font-size: .82rem; }
             .hero h1 { font-size: 1.8rem; }
             .hero p { font-size: .95rem; }
             .steps { grid-template-columns: 1fr; }
@@ -981,8 +1011,9 @@
             .options-row { flex-direction: column; }
             .btn-download { margin-left: 0; width: 100%; justify-content: center; }
             .platforms-grid { grid-template-columns: repeat(2, 1fr); }
-            .search-box { flex-wrap: wrap; }
             .search-box input { min-width: 0; }
+            .search-actions { flex-direction: column; align-items: stretch; }
+            .btn-paste, .btn-fetch { justify-content: center; width: 100%; }
         }
     </style>
 </head>
@@ -1071,6 +1102,8 @@
         <span class="logo-text">Everything</span>
     </div>
     <div class="nav-right">
+        <button class="nav-link active" id="homeNav" onclick="showView('home')">Download</button>
+        <button class="nav-link" id="aboutNav" onclick="showView('about')">About</button>
         <button class="theme-toggle tooltip" data-tip="Cookie settings" onclick="toggleCookiePanel()" id="cookieBtn" aria-label="Cookie settings">
             <svg style="width:18px;height:18px;fill:currentColor;"><use href="#i-cookie"/></svg>
         </button>
@@ -1082,27 +1115,29 @@
 </nav>
 
 <!-- ====== HERO ====== -->
-<section class="hero">
+<section class="hero home-content">
     <h1>Download Everything</h1>
-    <p>Paste any link from YouTube, TikTok, Instagram, Twitter/X, and 1000+ other sites — grab video, audio, images, or GIFs instantly.</p>
+    <p>Paste any link from YouTube, TikTok, Instagram, Threads, Twitter/X, and 1000+ other sites — get editor-ready video, audio, images, or GIFs.</p>
 </section>
 
 <!-- ====== MAIN ====== -->
 <div class="container">
 
     <!-- URL Input -->
-    <div class="search-box" id="searchBox">
+    <div class="search-box home-content" id="searchBox">
         <input type="text" id="urlInput" placeholder="Paste your URL here..." autocomplete="off" spellcheck="false">
-        <button class="btn-paste tooltip" data-tip="Paste from clipboard" onclick="pasteFromClipboard()">
-            <svg><use href="#i-clipboard"/></svg> Paste
-        </button>
-        <button class="btn-fetch" id="fetchBtn" onclick="fetchInfo()">
-            <svg style="width:16px;height:16px;fill:currentColor;"><use href="#i-search"/></svg> Fetch Info
-        </button>
+        <div class="search-actions">
+            <button class="btn-paste tooltip" data-tip="Paste from clipboard" onclick="pasteFromClipboard()">
+                <svg><use href="#i-clipboard"/></svg> Paste
+            </button>
+            <button class="btn-fetch" id="fetchBtn" onclick="fetchInfo()">
+                <svg style="width:16px;height:16px;fill:currentColor;"><use href="#i-search"/></svg> Fetch Info
+            </button>
+        </div>
     </div>
 
     <!-- How-to Steps -->
-    <div class="steps" id="stepsSection">
+    <div class="steps home-content" id="stepsSection">
         <div class="step">
             <div class="step-icon"><svg><use href="#i-link"/></svg></div>
             <h4>Paste URL</h4>
@@ -1121,7 +1156,7 @@
     </div>
 
     <!-- Cookie Setup Panel -->
-    <div class="cookie-banner" id="cookiePanel">
+    <div class="cookie-banner home-content" id="cookiePanel">
         <div class="cb-header">
             <svg><use href="#i-shield"/></svg>
             YouTube Authentication (Required for Deployed Servers)
@@ -1163,13 +1198,13 @@
     </div>
 
     <!-- Error -->
-    <div class="error-msg" id="errorMsg">
+    <div class="error-msg home-content" id="errorMsg">
         <svg><use href="#i-warning"/></svg>
         <span id="errorText"></span>
     </div>
 
     <!-- Single Video Preview -->
-    <div class="card" id="previewCard">
+    <div class="card home-content" id="previewCard">
         <div class="preview-layout">
             <img class="preview-thumb" id="previewThumb" src="" alt="thumbnail">
             <div class="preview-info">
@@ -1184,7 +1219,7 @@
         </div>
         <div class="options-row">
             <select id="formatSelect" onchange="onFormatChange()">
-                <option value="video">Video (MP4)</option>
+                <option value="video">Video (MP4, CapCut-ready)</option>
                 <option value="audio">Audio (MP3)</option>
                 <option value="image">Image (Thumbnail)</option>
                 <option value="gif">GIF (Animated)</option>
@@ -1204,7 +1239,7 @@
     </div>
 
     <!-- Playlist Preview -->
-    <div class="card" id="playlistCard">
+    <div class="card home-content" id="playlistCard">
         <h3 id="playlistTitle" style="margin-bottom:4px;">Playlist</h3>
         <div class="preview-meta" style="margin-bottom:4px;">
             <span id="playlistCount"></span>
@@ -1213,7 +1248,7 @@
         <div id="playlistItems" style="max-height:200px;overflow-y:auto;margin:12px 0;font-size:.88rem;color:var(--text2);"></div>
         <div class="options-row">
             <select id="plFormatSelect">
-                <option value="video">Video (MP4)</option>
+                <option value="video">Video (MP4, CapCut-ready)</option>
                 <option value="audio">Audio (MP3)</option>
                 <option value="image">Image (Thumbnail)</option>
                 <option value="gif">GIF (Animated)</option>
@@ -1233,7 +1268,7 @@
     </div>
 
     <!-- Progress -->
-    <div class="progress-card" id="progressCard">
+    <div class="progress-card home-content" id="progressCard">
         <div class="progress-inner">
             <div class="progress-header">
                 <strong id="progressStatus"><span class="spinner"></span> Starting download...</strong>
@@ -1250,10 +1285,15 @@
     </div>
 
     <!-- Result -->
-    <div class="card result-card" id="resultCard"></div>
+    <div class="card result-card home-content" id="resultCard"></div>
+
+    <section class="hero about-hero about-content">
+        <h1>About Everything</h1>
+        <p>A simple downloader for public media, with editor-ready video output for CapCut and other phone editors.</p>
+    </section>
 
     <!-- Supported Platforms -->
-    <section class="platforms-section">
+    <section class="platforms-section about-content">
         <h2 class="section-title">Supported Platforms</h2>
         <p class="section-subtitle">Download from 1,000+ websites — here are the most popular ones</p>
         <div class="platforms-grid">
@@ -1273,7 +1313,7 @@
     </section>
 
     <!-- YouTube Guide -->
-    <section class="yt-guide">
+    <section class="yt-guide about-content">
         <h2 class="section-title">YouTube Download Guide</h2>
         <p class="section-subtitle">Step-by-step instructions to download YouTube videos and audio</p>
         <div class="guide-grid">
@@ -1296,7 +1336,7 @@
                     <span class="gc-num">3</span>
                     <span class="gc-title">Pick Format &amp; Quality</span>
                 </div>
-                <div class="gc-body">Choose <strong>Video (MP4)</strong> for video, <strong>Audio (MP3)</strong> for music, <strong>Image</strong> to grab the thumbnail, or <strong>GIF</strong> to create an animated clip. Select a resolution if downloading video.</div>
+                <div class="gc-body">Choose <strong>Video (MP4, CapCut-ready)</strong> for video, <strong>Audio (MP3)</strong> for music, <strong>Image</strong> to grab the thumbnail, or <strong>GIF</strong> to create an animated clip. Select a resolution if downloading video.</div>
             </div>
             <div class="guide-card">
                 <div class="gc-head">
@@ -1312,7 +1352,7 @@
     </section>
 
     <!-- How-to Guide -->
-    <section class="howto-section">
+    <section class="howto-section about-content">
         <h2 class="section-title">How to Use Everything Downloader</h2>
         <p class="section-subtitle">Quick guides for the most popular platforms</p>
         <div class="howto-grid">
@@ -1362,7 +1402,7 @@
     </section>
 
     <!-- Security & Privacy -->
-    <section class="security-section">
+    <section class="security-section about-content">
         <h2 class="section-title">Security &amp; Privacy</h2>
         <p class="section-subtitle">Your privacy is a priority — here's how we keep things safe</p>
         <div class="security-grid">
@@ -1400,7 +1440,7 @@
     </section>
 
     <!-- FAQ -->
-    <section class="faq-section">
+    <section class="faq-section about-content">
         <h2 class="section-title">Frequently Asked Questions</h2>
         <p class="section-subtitle">Quick answers to common questions</p>
 
@@ -1423,14 +1463,14 @@
                 <span>What's the difference between Video, Audio, and Best?</span>
                 <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
             </div>
-            <div class="faq-a"><strong>Video (MP4)</strong> gives you a standard video file. <strong>Audio (MP3)</strong> extracts just the audio track. <strong>Image</strong> saves the video thumbnail as a picture. <strong>GIF</strong> converts the first 15 seconds into an animated GIF. <strong>Best Available</strong> downloads the highest quality format the site offers.</div>
+            <div class="faq-a"><strong>Video (MP4)</strong> is transcoded to H.264 video with AAC audio so it imports into CapCut and most phone editors. <strong>Audio (MP3)</strong> extracts just the audio track. <strong>Image</strong> saves the video thumbnail as a picture. <strong>GIF</strong> converts the first 15 seconds into an animated GIF. <strong>Best Available</strong> downloads the highest quality format the site offers, then normalizes video.</div>
         </div>
         <div class="faq-item">
             <div class="faq-q" onclick="toggleFaq(this)">
                 <span>Why did my download fail?</span>
                 <span class="arrow"><svg><use href="#i-chevron-down"/></svg></span>
             </div>
-            <div class="faq-a">Common reasons: <strong>YouTube "Sign in" error</strong> — you need to provide real cookies (click the cookie icon above). The URL might be private/region-locked, the site may have changed its format, or ffmpeg might not be installed on the server.</div>
+            <div class="faq-a">Common reasons: <strong>YouTube "Sign in" error</strong> — you need to provide real cookies (click the cookie icon above). The URL might be private/region-locked, the site may have changed its format, Threads or another site may not expose a supported public video, or ffmpeg might not be installed.</div>
         </div>
         <div class="faq-item">
             <div class="faq-q" onclick="toggleFaq(this)">
@@ -1442,7 +1482,7 @@
     </section>
 
     <!-- History -->
-    <section class="history-section" id="historySection">
+    <section class="history-section home-content" id="historySection">
         <h2 class="section-title" style="font-size:1.1rem;">Recent Downloads</h2>
         <ul class="history-list" id="historyList"></ul>
         <button class="btn-clear-history" onclick="clearHistory()">Clear History</button>
@@ -1489,6 +1529,20 @@
         document.documentElement.setAttribute("data-theme", next);
         localStorage.setItem("theme", next);
         updateThemeButton(next);
+    };
+
+    window.showView = function(view) {
+        const isAbout = view === "about";
+        document.body.classList.toggle("about-active", isAbout);
+        $("homeNav").classList.toggle("active", !isAbout);
+        $("aboutNav").classList.toggle("active", isAbout);
+        if (isAbout) {
+            $("cookiePanel").classList.remove("show");
+            window.scrollTo({top: 0, behavior: "smooth"});
+        } else {
+            $("urlInput").focus();
+            window.scrollTo({top: 0, behavior: "smooth"});
+        }
     };
 
     /* ---- Clipboard ---- */

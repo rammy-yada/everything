@@ -5,6 +5,7 @@ A web-based media downloader powered by **yt-dlp** that supports 1000+ websites.
 ## Features
 
 - **Universal Downloads** — YouTube, TikTok, Instagram, Twitter/X, Facebook, Reddit, Vimeo, SoundCloud, and 1000+ more
+- **Editor-ready Video** — Video downloads are transcoded to H.264/AAC MP4 for CapCut and most phone editors
 - **Format Selection** — Video (MP4), Audio (MP3), or Best Available
 - **Quality Control** — Choose from Best, 1080p, 720p, 480p, 360p
 - **Playlist Support** — Download entire playlists
@@ -14,7 +15,7 @@ A web-based media downloader powered by **yt-dlp** that supports 1000+ websites.
 ## Requirements
 
 - **Python 3.10+**
-- **ffmpeg** (for audio extraction and video merging)
+- **ffmpeg** (for audio extraction, video merging, and editor-compatible H.264/AAC conversion)
 
 ## Setup
 
